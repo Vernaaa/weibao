@@ -9,15 +9,14 @@
       --pink: #ffd9e8;
       --yellow: #fff4bf;
       --blue: #dff3ff;
-      --mint: #daf7e8;
-      --purple: #efe1ff;
       --text: #4b4b5a;
-      --card: rgba(255,255,255,0.9);
+      --card: rgba(255,255,255,0.92);
       --shadow: 0 10px 30px rgba(0,0,0,0.08);
       --radius: 28px;
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
@@ -74,6 +73,7 @@
       box-shadow: var(--shadow);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
+
     .btn:hover { transform: translateY(-2px); }
     .btn:active { transform: scale(0.98); }
 
@@ -165,6 +165,7 @@
     }
 
     .game-card:hover { transform: translateY(-5px); }
+
     .game-card .icon { font-size: 60px; }
     .game-card .name { font-size: 28px; font-weight: 800; margin-top: 10px; }
     .game-card .desc { font-size: 16px; color: #6b7280; margin-top: 6px; }
@@ -223,6 +224,7 @@
       margin: 18px auto;
       font-size: 20px;
       min-height: 30px;
+      line-height: 1.6;
     }
 
     .choice-grid {
@@ -243,6 +245,7 @@
       cursor: pointer;
       transition: transform 0.15s ease;
     }
+
     .choice-btn:hover { transform: translateY(-2px); }
     .choice-btn:active { transform: scale(0.97); }
 
@@ -254,30 +257,32 @@
       margin-top: 20px;
     }
 
-    .big-action {
+    .big-action,
+    .soft-action,
+    .option-action {
       min-width: 180px;
       min-height: 72px;
       border-radius: 24px;
       border: none;
-      background: #ff7da9;
-      color: white;
       font-size: 24px;
       font-weight: 800;
       box-shadow: var(--shadow);
       cursor: pointer;
     }
 
+    .big-action {
+      background: #ff7da9;
+      color: white;
+    }
+
     .soft-action {
-      min-width: 180px;
-      min-height: 72px;
-      border-radius: 24px;
-      border: none;
       background: white;
       color: var(--text);
-      font-size: 24px;
-      font-weight: 800;
-      box-shadow: var(--shadow);
-      cursor: pointer;
+    }
+
+    .option-action {
+      background: #ffffff;
+      color: var(--text);
     }
 
     .hint-cards {
@@ -371,7 +376,7 @@
     @media (max-width: 520px) {
       .choice-grid, .color-grid { grid-template-columns: 1fr 1fr; }
       .choice-btn { height: 115px; font-size: 52px; }
-      .big-action, .soft-action { width: 100%; min-width: 0; }
+      .big-action, .soft-action, .option-action { width: 100%; min-width: 0; }
       .subtitle { font-size: 16px; }
       .message { font-size: 18px; }
     }
@@ -396,7 +401,9 @@
 
       <div class="title-box">
         <h1>小小專注力遊樂園</h1>
-        <div class="subtitle">適合 2～3 歲小朋友的互動網頁。用可愛任務、童趣裝飾與簡單回饋，練習專注、辨識與短暫記憶。男孩女孩都能開心玩。</div>
+        <div class="subtitle">
+          適合 2～3 歲小朋友的互動網頁。用可愛任務、童趣裝飾與簡單回饋，練習專注、辨識與短暫記憶。男孩女孩都能開心玩。
+        </div>
         <div class="divider">🌼 ⭐ 🧸 ⭐ 🌼</div>
       </div>
 
@@ -420,7 +427,7 @@
         <div class="card game-card gradient-2" data-game="freeze">
           <div class="icon">🛑</div>
           <div class="name">停停走走</div>
-          <div class="desc">練習等待與控制</div>
+          <div class="desc">練習等待與判斷</div>
           <div class="start">開始玩 ▶</div>
         </div>
 
@@ -458,16 +465,19 @@
       <div class="game-top">
         <div>
           <h2>停停走走</h2>
-          <div class="game-sub">看到指令後，再按下面的大按鈕。</div>
+          <div class="game-sub">看到什麼，就按對應的按鈕。</div>
         </div>
         <button class="btn back-home">🏠 回首頁</button>
       </div>
       <div class="card game-box">
         <div class="target-emoji" id="freezeEmoji">🛑</div>
         <div class="target-name" id="freezeInstruction">停住</div>
-        <div class="message" id="freezeMessage">看到停住，就先看清楚再按。</div>
+        <div class="message" id="freezeMessage">看到停住，就按「停住」。</div>
         <div class="center-actions">
-          <button class="big-action" id="freezeActionBtn">我知道了</button>
+          <button class="option-action" id="freezeStopBtn">停住</button>
+          <button class="option-action" id="freezeClapBtn">拍拍手</button>
+        </div>
+        <div class="center-actions">
           <button class="soft-action" id="freezeNextBtn">換一題</button>
         </div>
       </div>
@@ -516,6 +526,7 @@
       freezeInstruction: '停住',
       memoryTarget: null,
       memoryTimer: null,
+      memoryLocked: true,
     };
 
     const screens = {
@@ -554,7 +565,9 @@
       state.stars += 1;
       state.rounds += 1;
       updateStats();
-      if (state.stars % 5 === 0) showCelebration();
+      if (state.stars % 5 === 0) {
+        showCelebration();
+      }
     }
 
     function speak(text) {
@@ -571,10 +584,12 @@
       Object.values(screens).forEach(el => el.classList.remove('active'));
       screens[name].classList.add('active');
       state.currentScreen = name;
+
       if (state.memoryTimer) {
         clearTimeout(state.memoryTimer);
         state.memoryTimer = null;
       }
+
       if (name === 'find') setupFindGame();
       if (name === 'freeze') setupFreezeGame();
       if (name === 'memory') setupMemoryGame();
@@ -604,6 +619,7 @@
       const target = rand(animals);
       const rest = shuffle(animals.filter(a => a.name !== target.name)).slice(0, 3);
       const choices = shuffle([target, ...rest]);
+
       document.getElementById('findTargetEmoji').textContent = target.emoji;
       document.getElementById('findTargetName').textContent = target.name;
       document.getElementById('findMessage').textContent = `請找到${target.name}`;
@@ -611,10 +627,12 @@
 
       const container = document.getElementById('findChoices');
       container.innerHTML = '';
+
       choices.forEach(item => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn';
         btn.textContent = item.emoji;
+
         btn.addEventListener('click', () => {
           const msg = document.getElementById('findMessage');
           if (item.name === target.name) {
@@ -625,6 +643,7 @@
             msg.textContent = '再看看喔～慢慢找 😊';
           }
         });
+
         container.appendChild(btn);
       });
     }
@@ -632,23 +651,34 @@
     function setupFreezeGame() {
       const instruction = Math.random() > 0.5 ? '停住' : '拍拍手';
       state.freezeInstruction = instruction;
+
       document.getElementById('freezeInstruction').textContent = instruction;
       document.getElementById('freezeEmoji').textContent = instruction === '停住' ? '🛑' : '👏';
-      document.getElementById('freezeMessage').textContent = instruction === '停住'
-        ? '看到停住，就先看清楚再按。'
-        : '看到拍拍手，就可以按大按鈕。';
+      document.getElementById('freezeMessage').textContent =
+        instruction === '停住'
+          ? '看到停住，就按「停住」。'
+          : '看到拍拍手，就按「拍拍手」。';
+
       speak(instruction);
     }
 
-    document.getElementById('freezeActionBtn').addEventListener('click', () => {
+    function handleFreezeChoice(choice) {
       const msg = document.getElementById('freezeMessage');
-      if (state.freezeInstruction === '停住') {
-        msg.textContent = '好棒，你有先看再按 🌟';
+      if (choice === state.freezeInstruction) {
+        msg.textContent = '答對了！你有看清楚再按 🌟';
+        earnStar();
+        setTimeout(setupFreezeGame, 850);
       } else {
-        msg.textContent = '答對了！拍拍手成功 👏';
+        msg.textContent = '再看一次喔～先看清楚 😊';
       }
-      earnStar();
-      setTimeout(setupFreezeGame, 850);
+    }
+
+    document.getElementById('freezeStopBtn').addEventListener('click', () => {
+      handleFreezeChoice('停住');
+    });
+
+    document.getElementById('freezeClapBtn').addEventListener('click', () => {
+      handleFreezeChoice('拍拍手');
     });
 
     document.getElementById('freezeNextBtn').addEventListener('click', () => {
@@ -659,6 +689,7 @@
       const cards = shuffle(colors).slice(0, 3);
       const target = rand(cards);
       state.memoryTarget = target;
+      state.memoryLocked = true;
 
       const msg = document.getElementById('memoryMessage');
       const hintCards = document.getElementById('memoryHintCards');
@@ -681,22 +712,35 @@
 
       state.memoryTimer = setTimeout(() => {
         hintCards.innerHTML = '';
-        const allChoices = shuffle([target, ...shuffle(colors.filter(c => c.name !== target.name)).slice(0, 3)]);
+        const allChoices = shuffle([
+          target,
+          ...shuffle(colors.filter(c => c.name !== target.name)).slice(0, 3)
+        ]);
+
         choices.style.display = 'grid';
+        state.memoryLocked = false;
+
         allChoices.forEach(item => {
           const btn = document.createElement('button');
           btn.className = 'color-choice';
           btn.style.background = item.color;
           btn.innerHTML = `<div style="font-size:34px;">${item.emoji}</div><div style="margin-top:6px;">${item.name}</div>`;
+
           btn.addEventListener('click', () => {
+            if (state.memoryLocked) return;
+
+            state.memoryLocked = true;
+
             if (item.name === state.memoryTarget.name) {
               msg.textContent = `好記性！這是${item.name} 🌟`;
               earnStar();
               setTimeout(setupMemoryGame, 900);
             } else {
-              msg.textContent = '差一點點，再試一次 💛';
+              msg.textContent = `差一點點，剛剛要找的是${state.memoryTarget.name}，我們再看一次 💛`;
+              setTimeout(setupMemoryGame, 1200);
             }
           });
+
           choices.appendChild(btn);
         });
       }, 1800);
@@ -705,6 +749,7 @@
     function createFloatingDecor() {
       const wrap = document.getElementById('floatingWrap');
       const icons = ['⭐', '☁️', '🌈', '🌸', '🎈', '✨', '🫧'];
+
       for (let i = 0; i < 16; i++) {
         const el = document.createElement('div');
         el.className = 'float';
