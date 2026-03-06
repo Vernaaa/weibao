@@ -1,398 +1,342 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Star, RotateCcw, Play, Heart, Sparkles } from "lucide-react";
+import { Star, RotateCcw, Play, Heart, Sparkles, Volume2, Home as HomeIcon, Trophy, Baby } from "lucide-react";
 
-const animalPool = [
-  { emoji: "🐶", name: "小狗" },
-  { emoji: "🐱", name: "小貓" },
-  { emoji: "🐰", name: "小兔" },
-  { emoji: "🐻", name: "小熊" },
-  { emoji: "🦊", name: "小狐狸" },
-  { emoji: "🐼", name: "小熊貓" },
-];
+/* -----------------------------
+   可愛裝飾元件
+------------------------------*/
 
-const colorPool = [
-  { name: "紅色", color: "#F87171", emoji: "🍎" },
-  { name: "黃色", color: "#FACC15", emoji: "⭐" },
-  { name: "綠色", color: "#4ADE80", emoji: "🍀" },
-  { name: "藍色", color: "#60A5FA", emoji: "💧" },
-];
-
-function pickRandom(list) {
-  return list[Math.floor(Math.random() * list.length)];
-}
-
-function shuffle(list) {
-  return [...list].sort(() => Math.random() - 0.5);
-}
-
-function BigTitle({ children, sub }) {
+function FloatingDecorations() {
+  const items = ["⭐","🌈","☁️","✨","🌸","🫧","🎈"];
   return (
-    <div className="text-center space-y-2">
-      <h1 className="text-3xl md:text-5xl font-bold tracking-tight">{children}</h1>
-      <p className="text-base md:text-lg text-slate-600">{sub}</p>
-    </div>
-  );
-}
-
-function ScoreBar({ stars }) {
-  return (
-    <div className="w-full max-w-xl mx-auto space-y-2">
-      <div className="flex items-center justify-center gap-2 text-slate-700 font-medium">
-        <Star className="w-5 h-5" /> 收集星星：{stars}
-      </div>
-      <Progress value={(stars % 5) * 20} className="h-3" />
-      <div className="text-center text-sm text-slate-500">每收集 5 顆星星，會有小小慶祝 🎉</div>
-    </div>
-  );
-}
-
-function Celebration({ show }) {
-  return (
-    <AnimatePresence>
-      {show && (
+    <div className="pointer-events-none fixed inset-0 overflow-hidden">
+      {items.map((i,idx)=>(
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          className="fixed inset-0 pointer-events-none flex items-center justify-center z-50"
-        >
-          <div className="text-center bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl px-8 py-6 border">
-            <div className="text-6xl mb-3">🎉</div>
-            <div className="text-2xl font-bold">太棒了！</div>
-            <div className="text-slate-600 mt-1">你收集了 5 顆星星！</div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-function Home({ onSelect, stars }) {
-  const games = [
-    {
-      key: "freeze",
-      title: "停停走走",
-      icon: "🛑",
-      desc: "練習等待、控制衝動",
-      color: "from-rose-100 to-orange-100",
-    },
-    {
-      key: "find",
-      title: "找找看",
-      icon: "🔍",
-      desc: "練習專注與辨識",
-      color: "from-sky-100 to-cyan-100",
-    },
-    {
-      key: "memory",
-      title: "記一記",
-      icon: "🧠",
-      desc: "練習短暫記憶",
-      color: "from-violet-100 to-fuchsia-100",
-    },
-  ];
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-pink-50 to-sky-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="pt-4">
-          <BigTitle sub="為 2～3 歲小朋友設計的互動遊戲，男女孩都適合。用可愛任務，偷偷練習執行功能。">
-            小小專注力遊樂園
-          </BigTitle>
-        </div>
-
-        <ScoreBar stars={stars} />
-
-        <div className="grid md:grid-cols-3 gap-5 pt-2">
-          {games.map((game) => (
-            <motion.button
-              whileHover={{ y: -4 }}
-              whileTap={{ scale: 0.98 }}
-              key={game.key}
-              onClick={() => onSelect(game.key)}
-              className={`rounded-[28px] p-6 shadow-lg bg-gradient-to-br ${game.color} text-left border border-white/70`}
-            >
-              <div className="text-5xl mb-4">{game.icon}</div>
-              <div className="text-2xl font-bold text-slate-800">{game.title}</div>
-              <div className="text-slate-600 mt-2 text-base">{game.desc}</div>
-              <div className="mt-5">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm">
-                  <Play className="w-4 h-4" /> 開始玩
-                </span>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-
-        <Card className="rounded-[28px] border-0 shadow-lg bg-white/85 backdrop-blur">
-          <CardContent className="p-6 md:p-8">
-            <div className="flex items-start gap-3">
-              <Heart className="w-6 h-6 mt-1 text-pink-500" />
-              <div>
-                <div className="font-bold text-lg">這個網頁在練什麼？</div>
-                <p className="text-slate-600 mt-2 leading-7">
-                  這三個小遊戲會用很簡單的互動，幫助孩子練習等待、專注、短暫記住指令與目標。對這個年齡層來說，重點不是答對很多題，而是在遊戲中慢慢養成「先看、再想、再做」的小習慣。像幼兒版大腦健身房，只是比較可愛，壓力比較低。
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function FreezeGame({ onBack, onEarnStar }) {
-  const [round, setRound] = useState(1);
-  const [instruction, setInstruction] = useState("走走");
-  const [message, setMessage] = useState("看到指令後，再按下面的大按鈕。");
-  const [pulse, setPulse] = useState(false);
-
-  useEffect(() => {
-    nextRound();
-  }, []);
-
-  const nextRound = () => {
-    const next = Math.random() > 0.5 ? "停住" : "走走";
-    setInstruction(next);
-    setMessage("看到指令後，再按下面的大按鈕。");
-    setPulse(true);
-    setTimeout(() => setPulse(false), 500);
-  };
-
-  const handleTap = () => {
-    if (instruction === "停住") {
-      setMessage("答對了！停住很厲害 🌟");
-      onEarnStar();
-    } else {
-      setMessage("答對了！可以走走 👏");
-      onEarnStar();
-    }
-    setTimeout(() => {
-      setRound((r) => r + 1);
-      nextRound();
-    }, 900);
-  };
-
-  return (
-    <GameShell title="停停走走" subtitle="看到『停住』或『走走』，再按按鈕。練習等待與控制衝動。" onBack={onBack}>
-      <div className="space-y-6 text-center">
-        <motion.div animate={pulse ? { scale: [1, 1.06, 1] } : { scale: 1 }} className="text-7xl md:text-8xl">
-          {instruction === "停住" ? "🛑" : "👣"}
-        </motion.div>
-        <div className="text-4xl md:text-6xl font-bold text-slate-800">{instruction}</div>
-        <p className="text-lg text-slate-600">{message}</p>
-        <div className="grid grid-cols-2 gap-4 max-w-xl mx-auto">
-          <Button onClick={handleTap} className="h-24 text-2xl rounded-3xl bg-rose-500 hover:bg-rose-500">
-            我有看清楚
-          </Button>
-          <Button onClick={nextRound} variant="secondary" className="h-24 text-2xl rounded-3xl">
-            換一題
-          </Button>
-        </div>
-        <div className="text-sm text-slate-500">第 {round} 回合</div>
-      </div>
-    </GameShell>
-  );
-}
-
-function FindGame({ onBack, onEarnStar }) {
-  const [target, setTarget] = useState(pickRandom(animalPool));
-  const [choices, setChoices] = useState(shuffle(animalPool).slice(0, 4));
-  const [message, setMessage] = useState("請找到一樣的動物。");
-
-  const nextRound = () => {
-    const selected = pickRandom(animalPool);
-    const rest = shuffle(animalPool.filter((a) => a.name !== selected.name)).slice(0, 3);
-    setTarget(selected);
-    setChoices(shuffle([selected, ...rest]));
-    setMessage("請找到一樣的動物。");
-  };
-
-  useEffect(() => {
-    nextRound();
-  }, []);
-
-  const handleChoice = (item) => {
-    if (item.name === target.name) {
-      setMessage(`找到了！這是${target.name} 🌟`);
-      onEarnStar();
-      setTimeout(nextRound, 850);
-    } else {
-      setMessage("再看看喔～不急不急 😊");
-    }
-  };
-
-  return (
-    <GameShell title="找找看" subtitle="先看目標，再從下面找出一樣的。練習專注與視覺搜尋。" onBack={onBack}>
-      <div className="space-y-7 text-center">
-        <div>
-          <div className="text-lg text-slate-500">請找到這個</div>
-          <div className="text-7xl md:text-8xl mt-2">{target.emoji}</div>
-          <div className="text-3xl font-bold mt-3">{target.name}</div>
-        </div>
-        <p className="text-lg text-slate-600">{message}</p>
-        <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-          {choices.map((item, idx) => (
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-              key={`${item.name}-${idx}`}
-              onClick={() => handleChoice(item)}
-              className="h-32 md:h-40 rounded-[28px] bg-white shadow-md border text-6xl md:text-7xl"
-            >
-              {item.emoji}
-            </motion.button>
-          ))}
-        </div>
-      </div>
-    </GameShell>
-  );
-}
-
-function MemoryGame({ onBack, onEarnStar }) {
-  const [sequence, setSequence] = useState([]);
-  const [choices, setChoices] = useState([]);
-  const [message, setMessage] = useState("先記住剛剛看到的顏色。");
-  const [showHint, setShowHint] = useState(true);
-
-  const nextRound = () => {
-    const items = shuffle(colorPool).slice(0, 2 + Math.floor(Math.random() * 2));
-    const target = pickRandom(items);
-    setSequence(items);
-    setChoices(shuffle(colorPool).slice(0, 4));
-    setMessage(`記住後，找出：${target.name}`);
-    setShowHint(true);
-    setTimeout(() => {
-      setChoices(shuffle([target, ...shuffle(colorPool.filter((c) => c.name !== target.name)).slice(0, 3)]));
-      setShowHint(false);
-    }, 1800);
-  };
-
-  useEffect(() => {
-    nextRound();
-  }, []);
-
-  const targetName = useMemo(() => {
-    const match = message.match(/找出：(.*)$/);
-    return match ? match[1] : "";
-  }, [message]);
-
-  const handleChoice = (item) => {
-    if (item.name === targetName) {
-      setMessage(`好記性！這是${item.name} 🌟`);
-      onEarnStar();
-      setTimeout(nextRound, 900);
-    } else {
-      setMessage("差一點點，再試一次 💛");
-    }
-  };
-
-  return (
-    <GameShell title="記一記" subtitle="先看一眼，再找出指定顏色。練習短暫記憶與注意力。" onBack={onBack}>
-      <div className="space-y-6 text-center">
-        <p className="text-lg text-slate-600">{message}</p>
-
-        {showHint ? (
-          <div className="flex items-center justify-center gap-4 flex-wrap min-h-[120px]">
-            {sequence.map((item) => (
-              <motion.div
-                key={item.name}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-24 h-24 md:w-28 md:h-28 rounded-[24px] shadow-lg border-4 border-white flex items-center justify-center text-4xl"
-                style={{ backgroundColor: item.color }}
-              >
-                {item.emoji}
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 max-w-xl mx-auto">
-            {choices.map((item) => (
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                key={item.name}
-                onClick={() => handleChoice(item)}
-                className="h-28 rounded-[28px] shadow-md border text-xl font-bold text-slate-800"
-                style={{ backgroundColor: item.color }}
-              >
-                <div className="text-3xl">{item.emoji}</div>
-                <div className="mt-1">{item.name}</div>
-              </motion.button>
-            ))}
-          </div>
-        )}
-      </div>
-    </GameShell>
-  );
-}
-
-function GameShell({ title, subtitle, onBack, children }) {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-pink-50 to-sky-50 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold">{title}</h2>
-            <p className="text-slate-600 mt-2 text-base md:text-lg">{subtitle}</p>
-          </div>
-          <Button onClick={onBack} variant="secondary" className="rounded-2xl h-12 px-5 text-base">
-            回首頁
-          </Button>
-        </div>
-        <Card className="rounded-[32px] border-0 shadow-xl bg-white/90 backdrop-blur">
-          <CardContent className="p-6 md:p-10">{children}</CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-export default function App() {
-  const [screen, setScreen] = useState("home");
-  const [stars, setStars] = useState(0);
-  const [celebrate, setCelebrate] = useState(false);
-
-  const earnStar = () => {
-    setStars((s) => {
-      const next = s + 1;
-      if (next % 5 === 0) {
-        setCelebrate(true);
-        setTimeout(() => setCelebrate(false), 1200);
-      }
-      return next;
-    });
-  };
-
-  return (
-    <div className="font-sans text-slate-800">
-      <Celebration show={celebrate} />
-      {screen === "home" && <Home onSelect={setScreen} stars={stars} />}
-      {screen === "freeze" && <FreezeGame onBack={() => setScreen("home")} onEarnStar={earnStar} />}
-      {screen === "find" && <FindGame onBack={() => setScreen("home")} onEarnStar={earnStar} />}
-      {screen === "memory" && <MemoryGame onBack={() => setScreen("home")} onEarnStar={earnStar} />}
-
-      <div className="fixed bottom-4 right-4">
-        <Button
-          onClick={() => {
-            setStars(0);
-            setScreen("home");
+          key={idx}
+          initial={{y:100,opacity:0}}
+          animate={{y:[100,-200],opacity:[0,1,0]}}
+          transition={{
+            duration:12+idx*2,
+            repeat:Infinity,
+            delay:idx*2
           }}
-          className="rounded-full h-14 w-14 shadow-xl"
-          title="重新開始"
+          className="absolute text-3xl"
+          style={{left:`${10+idx*12}%`,bottom:-50}}
         >
-          <RotateCcw className="w-5 h-5" />
-        </Button>
-      </div>
-
-      <div className="fixed bottom-4 left-4 hidden md:flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 shadow-lg border">
-        <Sparkles className="w-4 h-4 text-amber-500" />
-        <span className="text-sm text-slate-600">小提醒：這是低壓力互動版，讓孩子用玩耍方式練習等待、專注與記憶。</span>
-      </div>
+          {i}
+        </motion.div>
+      ))}
     </div>
   );
+}
+
+function CuteDivider(){
+  return (
+    <div className="flex justify-center gap-3 text-2xl opacity-70">
+      <span>🌼</span>
+      <span>⭐</span>
+      <span>🧸</span>
+      <span>⭐</span>
+      <span>🌼</span>
+    </div>
+  )
+}
+
+/* -----------------------------
+   資料
+------------------------------*/
+
+const animalPool=[
+{emoji:"🐶",name:"小狗"},
+{emoji:"🐱",name:"小貓"},
+{emoji:"🐰",name:"小兔"},
+{emoji:"🐻",name:"小熊"},
+{emoji:"🦊",name:"小狐狸"},
+{emoji:"🐼",name:"熊貓"}
+]
+
+const colorPool=[
+{name:"紅色",color:"#F87171",emoji:"🍎"},
+{name:"黃色",color:"#FACC15",emoji:"⭐"},
+{name:"綠色",color:"#4ADE80",emoji:"🍀"},
+{name:"藍色",color:"#60A5FA",emoji:"💧"}
+]
+
+function pickRandom(list){return list[Math.floor(Math.random()*list.length)]}
+function shuffle(list){return [...list].sort(()=>Math.random()-0.5)}
+
+/* -----------------------------
+   語音與音效
+------------------------------*/
+
+function speak(text,enabled=true){
+ if(!enabled||!window.speechSynthesis)return
+ const u=new SpeechSynthesisUtterance(text)
+ u.lang="zh-TW"
+ u.rate=0.9
+ window.speechSynthesis.speak(u)
+}
+
+/* -----------------------------
+   UI 元件
+------------------------------*/
+
+function Title({children,sub}){
+ return(
+ <div className="text-center space-y-3">
+ <h1 className="text-4xl md:text-5xl font-bold">{children}</h1>
+ <p className="text-slate-600 text-lg max-w-2xl mx-auto">{sub}</p>
+ <CuteDivider/>
+ </div>
+ )}
+
+function ScoreBar({stars,total}){
+ return(
+ <div className="max-w-xl mx-auto space-y-3">
+ <div className="flex justify-center gap-6 text-lg font-semibold">
+ <div>⭐ 星星 {stars}</div>
+ <div>🏆 回合 {total}</div>
+ </div>
+ <Progress value={(stars%5)*20}/>
+ </div>
+ )}
+
+function Celebration({show}){
+ return(
+ <AnimatePresence>
+ {show&&(
+ <motion.div
+ initial={{scale:0}}
+ animate={{scale:1}}
+ exit={{scale:0}}
+ className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
+ >
+ <div className="bg-white rounded-3xl shadow-xl px-10 py-8 text-center">
+ <div className="text-6xl">🎉✨🎈</div>
+ <div className="text-2xl font-bold mt-3">太棒了！</div>
+ </div>
+ </motion.div>
+ )}
+ </AnimatePresence>
+ )}
+
+/* -----------------------------
+   首頁
+------------------------------*/
+
+function Home({onSelect,stars,total,soundOn,toggleSound}){
+
+ const games=[
+ {key:"freeze",icon:"🛑",title:"停停走走",desc:"練習等待"},
+ {key:"find",icon:"🔍",title:"找找看",desc:"練習專注"},
+ {key:"memory",icon:"🧠",title:"記一記",desc:"練習記憶"}
+ ]
+
+ return(
+ <div className="min-h-screen bg-gradient-to-b from-pink-100 via-yellow-50 to-sky-100 p-6">
+ <FloatingDecorations/>
+ <div className="max-w-6xl mx-auto space-y-8">
+
+ <div className="flex justify-end">
+ <Button onClick={toggleSound} variant="secondary">
+ <Volume2 className="w-4 h-4 mr-2"/>
+ {soundOn?"語音開":"語音關"}
+ </Button>
+ </div>
+
+ <Title sub="為2~3歲幼兒設計的互動小遊戲，透過玩耍培養專注力與思考能力。">
+ 小小專注力遊樂園
+ </Title>
+
+ <ScoreBar stars={stars} total={total}/>
+
+ <div className="grid md:grid-cols-3 gap-6">
+ {games.map(g=> (
+ <motion.button
+ key={g.key}
+ whileHover={{y:-6}}
+ whileTap={{scale:0.96}}
+ onClick={()=>onSelect(g.key)}
+ className="rounded-3xl bg-white shadow-lg p-6 text-center border"
+ >
+ <div className="text-6xl">{g.icon}</div>
+ <div className="text-2xl font-bold mt-3">{g.title}</div>
+ <div className="text-slate-500 mt-1">{g.desc}</div>
+ <div className="mt-4 text-sm">開始玩 ▶</div>
+ </motion.button>
+ ))}
+ </div>
+
+ <Card className="rounded-3xl">
+ <CardContent className="p-6 text-center">
+ <div className="text-xl font-bold">💡 小提醒</div>
+ <p className="text-slate-600 mt-2">
+ 每次玩 5~10 分鐘即可。幼兒的大腦正在高速發展，玩得開心比答對更多題更重要。
+ </p>
+ </CardContent>
+ </Card>
+
+ </div>
+ </div>
+ )
+}
+
+/* -----------------------------
+   遊戲：找找看
+------------------------------*/
+
+function FindGame({onBack,onEarnStar,soundOn,onTrack}){
+
+ const[target,setTarget]=useState(pickRandom(animalPool))
+ const[choices,setChoices]=useState([])
+ const[msg,setMsg]=useState("找到一樣的動物")
+
+ const nextRound=()=>{
+ const t=pickRandom(animalPool)
+ const rest=shuffle(animalPool.filter(a=>a.name!==t.name)).slice(0,3)
+ setTarget(t)
+ setChoices(shuffle([t,...rest]))
+ setMsg(`請找到${t.name}`)
+ speak(`請找到${t.name}`,soundOn)
+ }
+
+ useEffect(()=>{nextRound()},[])
+
+ const choose=(item)=>{
+ if(item.name===target.name){
+ setMsg("答對了 🌟")
+ onEarnStar()
+ onTrack("find")
+ setTimeout(nextRound,800)
+ }else{
+ setMsg("再看看喔 😊")
+ }
+ }
+
+ return(
+ <GameShell title="找找看" onBack={onBack}>
+
+ <div className="text-center space-y-6">
+
+ <div className="text-7xl">{target.emoji}</div>
+ <div className="text-2xl">{target.name}</div>
+
+ <p>{msg}</p>
+
+ <div className="grid grid-cols-2 gap-4 max-w-xl mx-auto">
+ {choices.map((c,i)=>(
+ <button
+ key={i}
+ onClick={()=>choose(c)}
+ className="text-6xl h-28 bg-white rounded-3xl shadow"
+ >
+ {c.emoji}
+ </button>
+ ))}
+ </div>
+
+ </div>
+
+ </GameShell>
+ )
+}
+
+/* -----------------------------
+   遊戲容器
+------------------------------*/
+
+function GameShell({title,children,onBack}){
+ return(
+ <div className="min-h-screen bg-gradient-to-b from-pink-100 via-yellow-50 to-sky-100 p-6">
+ <FloatingDecorations/>
+ <div className="max-w-4xl mx-auto space-y-6">
+
+ <div className="flex justify-between items-center">
+ <h2 className="text-3xl font-bold">{title}</h2>
+ <Button onClick={onBack}>
+ <HomeIcon className="w-4 h-4 mr-2"/>
+ 回首頁
+ </Button>
+ </div>
+
+ <Card className="rounded-3xl">
+ <CardContent className="p-6">
+ {children}
+ </CardContent>
+ </Card>
+
+ </div>
+ </div>
+ )
+}
+
+/* -----------------------------
+   主程式
+------------------------------*/
+
+export default function App(){
+
+ const[screen,setScreen]=useState("home")
+ const[stars,setStars]=useState(0)
+ const[celebrate,setCelebrate]=useState(false)
+ const[soundOn,setSoundOn]=useState(true)
+ const[gameData,setGameData]=useState({find:0})
+
+ const total=useMemo(()=>Object.values(gameData).reduce((a,b)=>a+b,0),[gameData])
+
+ const earnStar=()=>{
+ setStars(s=>{
+ const n=s+1
+ if(n%5===0){
+ setCelebrate(true)
+ setTimeout(()=>setCelebrate(false),1200)
+ }
+ return n
+ })
+ }
+
+ const track=(k)=>setGameData(p=>({...p,[k]:(p[k]||0)+1}))
+
+ return(
+ <div className="font-sans">
+
+ <Celebration show={celebrate}/>
+
+ {screen==="home"&&(
+ <Home
+ onSelect={setScreen}
+ stars={stars}
+ total={total}
+ soundOn={soundOn}
+ toggleSound={()=>setSoundOn(v=>!v)}
+ />
+ )}
+
+ {screen==="find"&&(
+ <FindGame
+ onBack={()=>setScreen("home")}
+ onEarnStar={earnStar}
+ soundOn={soundOn}
+ onTrack={track}
+ />
+ )}
+
+ <div className="fixed bottom-4 right-4">
+ <Button
+ className="rounded-full h-14 w-14"
+ onClick={()=>{
+ setStars(0)
+ setGameData({find:0})
+ setScreen("home")
+ }}
+ >
+ <RotateCcw/>
+ </Button>
+ </div>
+
+ </div>
+ )
 }
