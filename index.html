@@ -1,342 +1,725 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Star, RotateCcw, Play, Heart, Sparkles, Volume2, Home as HomeIcon, Trophy, Baby } from "lucide-react";
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小小專注力遊樂園</title>
+  <style>
+    :root {
+      --pink: #ffd9e8;
+      --yellow: #fff4bf;
+      --blue: #dff3ff;
+      --mint: #daf7e8;
+      --purple: #efe1ff;
+      --text: #4b4b5a;
+      --card: rgba(255,255,255,0.9);
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 28px;
+    }
 
-/* -----------------------------
-   可愛裝飾元件
-------------------------------*/
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--pink), #fffaf0 45%, var(--blue));
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-function FloatingDecorations() {
-  const items = ["⭐","🌈","☁️","✨","🌸","🫧","🎈"];
-  return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden">
-      {items.map((i,idx)=>(
-        <motion.div
-          key={idx}
-          initial={{y:100,opacity:0}}
-          animate={{y:[100,-200],opacity:[0,1,0]}}
-          transition={{
-            duration:12+idx*2,
-            repeat:Infinity,
-            delay:idx*2
-          }}
-          className="absolute text-3xl"
-          style={{left:`${10+idx*12}%`,bottom:-50}}
-        >
-          {i}
-        </motion.div>
-      ))}
+    .floating-wrap {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .float {
+      position: absolute;
+      font-size: 32px;
+      opacity: 0.75;
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(100px) scale(0.9) rotate(0deg); opacity: 0; }
+      15% { opacity: 0.9; }
+      100% { transform: translateY(-120vh) scale(1.08) rotate(12deg); opacity: 0; }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 16px 88px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      background: white;
+      color: var(--text);
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn:active { transform: scale(0.98); }
+
+    .title-box {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 8px 0 10px;
+      font-size: clamp(34px, 6vw, 54px);
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      max-width: 760px;
+      margin: 0 auto;
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .divider {
+      margin-top: 12px;
+      font-size: 28px;
+      letter-spacing: 6px;
+    }
+
+    .stats {
+      max-width: 720px;
+      margin: 18px auto 26px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .stat-card, .card {
+      background: var(--card);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.7);
+    }
+
+    .stat-card {
+      padding: 14px 16px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .progress-wrap {
+      height: 14px;
+      background: rgba(255,255,255,0.8);
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ffb2c9, #ffd36c, #9addff);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .hint-center {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .game-card {
+      padding: 24px 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .game-card:hover { transform: translateY(-5px); }
+    .game-card .icon { font-size: 60px; }
+    .game-card .name { font-size: 28px; font-weight: 800; margin-top: 10px; }
+    .game-card .desc { font-size: 16px; color: #6b7280; margin-top: 6px; }
+    .game-card .start { margin-top: 14px; font-size: 15px; font-weight: 700; }
+
+    .gradient-1 { background: linear-gradient(135deg, #ffe0ea, #fff0cc); }
+    .gradient-2 { background: linear-gradient(135deg, #ddf4ff, #dfffea); }
+    .gradient-3 { background: linear-gradient(135deg, #efe2ff, #ffe3f6); }
+
+    .info-card {
+      padding: 22px;
+      text-align: center;
+      line-height: 1.9;
+      font-size: 17px;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .game-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .game-top h2 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+    }
+
+    .game-sub {
+      margin: 8px 0 0;
+      font-size: 18px;
+      color: #667085;
+    }
+
+    .game-box {
+      padding: 28px 18px;
+      text-align: center;
+    }
+
+    .target-emoji {
+      font-size: clamp(72px, 14vw, 110px);
+      line-height: 1.1;
+    }
+
+    .target-name {
+      margin-top: 8px;
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 800;
+    }
+
+    .message {
+      margin: 18px auto;
+      font-size: 20px;
+      min-height: 30px;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .choice-btn {
+      height: 130px;
+      border: none;
+      border-radius: 30px;
+      font-size: 58px;
+      background: white;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .choice-btn:hover { transform: translateY(-2px); }
+    .choice-btn:active { transform: scale(0.97); }
+
+    .center-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .big-action {
+      min-width: 180px;
+      min-height: 72px;
+      border-radius: 24px;
+      border: none;
+      background: #ff7da9;
+      color: white;
+      font-size: 24px;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+
+    .soft-action {
+      min-width: 180px;
+      min-height: 72px;
+      border-radius: 24px;
+      border: none;
+      background: white;
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+
+    .hint-cards {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      min-height: 130px;
+      margin: 12px 0;
+    }
+
+    .color-card {
+      width: 110px;
+      height: 110px;
+      border-radius: 26px;
+      border: 4px solid white;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .color-choice {
+      height: 120px;
+      border: none;
+      border-radius: 28px;
+      font-size: 22px;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      color: #3c3c4b;
+    }
+
+    .bottom-reset {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 5;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      box-shadow: var(--shadow);
+      font-size: 26px;
+      cursor: pointer;
+    }
+
+    .celebration {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.25);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .celebration.show { display: flex; }
+
+    .celebration-box {
+      background: rgba(255,255,255,0.95);
+      border-radius: 32px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.12);
+      padding: 30px 34px;
+      text-align: center;
+      animation: popIn 0.25s ease;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 860px) {
+      .home-grid { grid-template-columns: 1fr; }
+      .game-top { flex-direction: column; align-items: stretch; }
+      .stat-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .choice-grid, .color-grid { grid-template-columns: 1fr 1fr; }
+      .choice-btn { height: 115px; font-size: 52px; }
+      .big-action, .soft-action { width: 100%; min-width: 0; }
+      .subtitle { font-size: 16px; }
+      .message { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-wrap" id="floatingWrap"></div>
+
+  <div class="celebration" id="celebration">
+    <div class="celebration-box">
+      <div style="font-size:64px;">🎉✨🎈</div>
+      <div style="font-size:30px; font-weight:800; margin-top:8px;">太棒了！</div>
+      <div style="font-size:20px; margin-top:8px;">你收集了 5 顆星星！</div>
     </div>
-  );
-}
+  </div>
 
-function CuteDivider(){
-  return (
-    <div className="flex justify-center gap-3 text-2xl opacity-70">
-      <span>🌼</span>
-      <span>⭐</span>
-      <span>🧸</span>
-      <span>⭐</span>
-      <span>🌼</span>
+  <div class="app">
+    <div id="homeScreen" class="screen active">
+      <div class="topbar">
+        <button class="btn" id="soundToggleBtn">🔊 語音開</button>
+      </div>
+
+      <div class="title-box">
+        <h1>小小專注力遊樂園</h1>
+        <div class="subtitle">適合 2～3 歲小朋友的互動網頁。用可愛任務、童趣裝飾與簡單回饋，練習專注、辨識與短暫記憶。男孩女孩都能開心玩。</div>
+        <div class="divider">🌼 ⭐ 🧸 ⭐ 🌼</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-row">
+          <div class="stat-card">⭐ 星星：<span id="starsCount">0</span></div>
+          <div class="stat-card">🏆 回合：<span id="roundsCount">0</span></div>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="hint-center">每收集 5 顆星星，就會出現慶祝動畫。</div>
+      </div>
+
+      <div class="home-grid">
+        <div class="card game-card gradient-1" data-game="find">
+          <div class="icon">🔍</div>
+          <div class="name">找找看</div>
+          <div class="desc">練習專注與辨識</div>
+          <div class="start">開始玩 ▶</div>
+        </div>
+
+        <div class="card game-card gradient-2" data-game="freeze">
+          <div class="icon">🛑</div>
+          <div class="name">停停走走</div>
+          <div class="desc">練習等待與控制</div>
+          <div class="start">開始玩 ▶</div>
+        </div>
+
+        <div class="card game-card gradient-3" data-game="memory">
+          <div class="icon">🧠</div>
+          <div class="name">記一記</div>
+          <div class="desc">練習短暫記憶</div>
+          <div class="start">開始玩 ▶</div>
+        </div>
+      </div>
+
+      <div class="card info-card">
+        <div style="font-size:24px; font-weight:800; margin-bottom:8px;">💡 小提醒</div>
+        每次遊玩 5～10 分鐘即可。對幼兒來說，玩得開心、願意互動，比一直答題更重要。學習藏在遊戲裡，才是這個年齡最厲害的設計。
+      </div>
     </div>
-  )
-}
 
-/* -----------------------------
-   資料
-------------------------------*/
+    <div id="findScreen" class="screen">
+      <div class="game-top">
+        <div>
+          <h2>找找看</h2>
+          <div class="game-sub">請找出和上面一樣的動物。</div>
+        </div>
+        <button class="btn back-home">🏠 回首頁</button>
+      </div>
+      <div class="card game-box">
+        <div class="target-emoji" id="findTargetEmoji">🐶</div>
+        <div class="target-name" id="findTargetName">小狗</div>
+        <div class="message" id="findMessage">請找到小狗</div>
+        <div class="choice-grid" id="findChoices"></div>
+      </div>
+    </div>
 
-const animalPool=[
-{emoji:"🐶",name:"小狗"},
-{emoji:"🐱",name:"小貓"},
-{emoji:"🐰",name:"小兔"},
-{emoji:"🐻",name:"小熊"},
-{emoji:"🦊",name:"小狐狸"},
-{emoji:"🐼",name:"熊貓"}
-]
+    <div id="freezeScreen" class="screen">
+      <div class="game-top">
+        <div>
+          <h2>停停走走</h2>
+          <div class="game-sub">看到指令後，再按下面的大按鈕。</div>
+        </div>
+        <button class="btn back-home">🏠 回首頁</button>
+      </div>
+      <div class="card game-box">
+        <div class="target-emoji" id="freezeEmoji">🛑</div>
+        <div class="target-name" id="freezeInstruction">停住</div>
+        <div class="message" id="freezeMessage">看到停住，就先看清楚再按。</div>
+        <div class="center-actions">
+          <button class="big-action" id="freezeActionBtn">我知道了</button>
+          <button class="soft-action" id="freezeNextBtn">換一題</button>
+        </div>
+      </div>
+    </div>
 
-const colorPool=[
-{name:"紅色",color:"#F87171",emoji:"🍎"},
-{name:"黃色",color:"#FACC15",emoji:"⭐"},
-{name:"綠色",color:"#4ADE80",emoji:"🍀"},
-{name:"藍色",color:"#60A5FA",emoji:"💧"}
-]
+    <div id="memoryScreen" class="screen">
+      <div class="game-top">
+        <div>
+          <h2>記一記</h2>
+          <div class="game-sub">先看一下，等一下再找出指定顏色。</div>
+        </div>
+        <button class="btn back-home">🏠 回首頁</button>
+      </div>
+      <div class="card game-box">
+        <div class="message" id="memoryMessage">先記住剛剛看到的顏色。</div>
+        <div class="hint-cards" id="memoryHintCards"></div>
+        <div class="color-grid" id="memoryChoices" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
 
-function pickRandom(list){return list[Math.floor(Math.random()*list.length)]}
-function shuffle(list){return [...list].sort(()=>Math.random()-0.5)}
+  <button class="bottom-reset" id="resetBtn" title="重新開始">↻</button>
 
-/* -----------------------------
-   語音與音效
-------------------------------*/
+  <script>
+    const animals = [
+      { emoji: '🐶', name: '小狗' },
+      { emoji: '🐱', name: '小貓' },
+      { emoji: '🐰', name: '小兔' },
+      { emoji: '🐻', name: '小熊' },
+      { emoji: '🦊', name: '小狐狸' },
+      { emoji: '🐼', name: '熊貓' },
+    ];
 
-function speak(text,enabled=true){
- if(!enabled||!window.speechSynthesis)return
- const u=new SpeechSynthesisUtterance(text)
- u.lang="zh-TW"
- u.rate=0.9
- window.speechSynthesis.speak(u)
-}
+    const colors = [
+      { name: '紅色', color: '#F87171', emoji: '🍎' },
+      { name: '黃色', color: '#FACC15', emoji: '⭐' },
+      { name: '綠色', color: '#4ADE80', emoji: '🍀' },
+      { name: '藍色', color: '#60A5FA', emoji: '💧' },
+    ];
 
-/* -----------------------------
-   UI 元件
-------------------------------*/
+    const state = {
+      stars: 0,
+      rounds: 0,
+      soundOn: true,
+      currentScreen: 'home',
+      freezeInstruction: '停住',
+      memoryTarget: null,
+      memoryTimer: null,
+    };
 
-function Title({children,sub}){
- return(
- <div className="text-center space-y-3">
- <h1 className="text-4xl md:text-5xl font-bold">{children}</h1>
- <p className="text-slate-600 text-lg max-w-2xl mx-auto">{sub}</p>
- <CuteDivider/>
- </div>
- )}
+    const screens = {
+      home: document.getElementById('homeScreen'),
+      find: document.getElementById('findScreen'),
+      freeze: document.getElementById('freezeScreen'),
+      memory: document.getElementById('memoryScreen'),
+    };
 
-function ScoreBar({stars,total}){
- return(
- <div className="max-w-xl mx-auto space-y-3">
- <div className="flex justify-center gap-6 text-lg font-semibold">
- <div>⭐ 星星 {stars}</div>
- <div>🏆 回合 {total}</div>
- </div>
- <Progress value={(stars%5)*20}/>
- </div>
- )}
+    const starsCount = document.getElementById('starsCount');
+    const roundsCount = document.getElementById('roundsCount');
+    const progressBar = document.getElementById('progressBar');
+    const celebration = document.getElementById('celebration');
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
 
-function Celebration({show}){
- return(
- <AnimatePresence>
- {show&&(
- <motion.div
- initial={{scale:0}}
- animate={{scale:1}}
- exit={{scale:0}}
- className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
- >
- <div className="bg-white rounded-3xl shadow-xl px-10 py-8 text-center">
- <div className="text-6xl">🎉✨🎈</div>
- <div className="text-2xl font-bold mt-3">太棒了！</div>
- </div>
- </motion.div>
- )}
- </AnimatePresence>
- )}
+    function rand(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
 
-/* -----------------------------
-   首頁
-------------------------------*/
+    function shuffle(list) {
+      return [...list].sort(() => Math.random() - 0.5);
+    }
 
-function Home({onSelect,stars,total,soundOn,toggleSound}){
+    function updateStats() {
+      starsCount.textContent = state.stars;
+      roundsCount.textContent = state.rounds;
+      progressBar.style.width = ((state.stars % 5) * 20) + '%';
+    }
 
- const games=[
- {key:"freeze",icon:"🛑",title:"停停走走",desc:"練習等待"},
- {key:"find",icon:"🔍",title:"找找看",desc:"練習專注"},
- {key:"memory",icon:"🧠",title:"記一記",desc:"練習記憶"}
- ]
+    function showCelebration() {
+      celebration.classList.add('show');
+      setTimeout(() => celebration.classList.remove('show'), 1200);
+    }
 
- return(
- <div className="min-h-screen bg-gradient-to-b from-pink-100 via-yellow-50 to-sky-100 p-6">
- <FloatingDecorations/>
- <div className="max-w-6xl mx-auto space-y-8">
+    function earnStar() {
+      state.stars += 1;
+      state.rounds += 1;
+      updateStats();
+      if (state.stars % 5 === 0) showCelebration();
+    }
 
- <div className="flex justify-end">
- <Button onClick={toggleSound} variant="secondary">
- <Volume2 className="w-4 h-4 mr-2"/>
- {soundOn?"語音開":"語音關"}
- </Button>
- </div>
+    function speak(text) {
+      if (!state.soundOn || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'zh-TW';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.05;
+      window.speechSynthesis.speak(utterance);
+    }
 
- <Title sub="為2~3歲幼兒設計的互動小遊戲，透過玩耍培養專注力與思考能力。">
- 小小專注力遊樂園
- </Title>
+    function switchScreen(name) {
+      Object.values(screens).forEach(el => el.classList.remove('active'));
+      screens[name].classList.add('active');
+      state.currentScreen = name;
+      if (state.memoryTimer) {
+        clearTimeout(state.memoryTimer);
+        state.memoryTimer = null;
+      }
+      if (name === 'find') setupFindGame();
+      if (name === 'freeze') setupFreezeGame();
+      if (name === 'memory') setupMemoryGame();
+    }
 
- <ScoreBar stars={stars} total={total}/>
+    document.querySelectorAll('.game-card').forEach(card => {
+      card.addEventListener('click', () => switchScreen(card.dataset.game));
+    });
 
- <div className="grid md:grid-cols-3 gap-6">
- {games.map(g=> (
- <motion.button
- key={g.key}
- whileHover={{y:-6}}
- whileTap={{scale:0.96}}
- onClick={()=>onSelect(g.key)}
- className="rounded-3xl bg-white shadow-lg p-6 text-center border"
- >
- <div className="text-6xl">{g.icon}</div>
- <div className="text-2xl font-bold mt-3">{g.title}</div>
- <div className="text-slate-500 mt-1">{g.desc}</div>
- <div className="mt-4 text-sm">開始玩 ▶</div>
- </motion.button>
- ))}
- </div>
+    document.querySelectorAll('.back-home').forEach(btn => {
+      btn.addEventListener('click', () => switchScreen('home'));
+    });
 
- <Card className="rounded-3xl">
- <CardContent className="p-6 text-center">
- <div className="text-xl font-bold">💡 小提醒</div>
- <p className="text-slate-600 mt-2">
- 每次玩 5~10 分鐘即可。幼兒的大腦正在高速發展，玩得開心比答對更多題更重要。
- </p>
- </CardContent>
- </Card>
+    soundToggleBtn.addEventListener('click', () => {
+      state.soundOn = !state.soundOn;
+      soundToggleBtn.textContent = state.soundOn ? '🔊 語音開' : '🔇 語音關';
+    });
 
- </div>
- </div>
- )
-}
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.stars = 0;
+      state.rounds = 0;
+      updateStats();
+      switchScreen('home');
+    });
 
-/* -----------------------------
-   遊戲：找找看
-------------------------------*/
+    function setupFindGame() {
+      const target = rand(animals);
+      const rest = shuffle(animals.filter(a => a.name !== target.name)).slice(0, 3);
+      const choices = shuffle([target, ...rest]);
+      document.getElementById('findTargetEmoji').textContent = target.emoji;
+      document.getElementById('findTargetName').textContent = target.name;
+      document.getElementById('findMessage').textContent = `請找到${target.name}`;
+      speak(`請找到${target.name}`);
 
-function FindGame({onBack,onEarnStar,soundOn,onTrack}){
+      const container = document.getElementById('findChoices');
+      container.innerHTML = '';
+      choices.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = item.emoji;
+        btn.addEventListener('click', () => {
+          const msg = document.getElementById('findMessage');
+          if (item.name === target.name) {
+            msg.textContent = `找到了！這是${target.name} 🌟`;
+            earnStar();
+            setTimeout(setupFindGame, 850);
+          } else {
+            msg.textContent = '再看看喔～慢慢找 😊';
+          }
+        });
+        container.appendChild(btn);
+      });
+    }
 
- const[target,setTarget]=useState(pickRandom(animalPool))
- const[choices,setChoices]=useState([])
- const[msg,setMsg]=useState("找到一樣的動物")
+    function setupFreezeGame() {
+      const instruction = Math.random() > 0.5 ? '停住' : '拍拍手';
+      state.freezeInstruction = instruction;
+      document.getElementById('freezeInstruction').textContent = instruction;
+      document.getElementById('freezeEmoji').textContent = instruction === '停住' ? '🛑' : '👏';
+      document.getElementById('freezeMessage').textContent = instruction === '停住'
+        ? '看到停住，就先看清楚再按。'
+        : '看到拍拍手，就可以按大按鈕。';
+      speak(instruction);
+    }
 
- const nextRound=()=>{
- const t=pickRandom(animalPool)
- const rest=shuffle(animalPool.filter(a=>a.name!==t.name)).slice(0,3)
- setTarget(t)
- setChoices(shuffle([t,...rest]))
- setMsg(`請找到${t.name}`)
- speak(`請找到${t.name}`,soundOn)
- }
+    document.getElementById('freezeActionBtn').addEventListener('click', () => {
+      const msg = document.getElementById('freezeMessage');
+      if (state.freezeInstruction === '停住') {
+        msg.textContent = '好棒，你有先看再按 🌟';
+      } else {
+        msg.textContent = '答對了！拍拍手成功 👏';
+      }
+      earnStar();
+      setTimeout(setupFreezeGame, 850);
+    });
 
- useEffect(()=>{nextRound()},[])
+    document.getElementById('freezeNextBtn').addEventListener('click', () => {
+      setupFreezeGame();
+    });
 
- const choose=(item)=>{
- if(item.name===target.name){
- setMsg("答對了 🌟")
- onEarnStar()
- onTrack("find")
- setTimeout(nextRound,800)
- }else{
- setMsg("再看看喔 😊")
- }
- }
+    function setupMemoryGame() {
+      const cards = shuffle(colors).slice(0, 3);
+      const target = rand(cards);
+      state.memoryTarget = target;
 
- return(
- <GameShell title="找找看" onBack={onBack}>
+      const msg = document.getElementById('memoryMessage');
+      const hintCards = document.getElementById('memoryHintCards');
+      const choices = document.getElementById('memoryChoices');
 
- <div className="text-center space-y-6">
+      msg.textContent = `先看一看，等一下找出${target.name}`;
+      hintCards.innerHTML = '';
+      choices.innerHTML = '';
+      choices.style.display = 'none';
 
- <div className="text-7xl">{target.emoji}</div>
- <div className="text-2xl">{target.name}</div>
+      cards.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'color-card';
+        div.style.background = item.color;
+        div.textContent = item.emoji;
+        hintCards.appendChild(div);
+      });
 
- <p>{msg}</p>
+      speak(`先看一看，等一下找出${target.name}`);
 
- <div className="grid grid-cols-2 gap-4 max-w-xl mx-auto">
- {choices.map((c,i)=>(
- <button
- key={i}
- onClick={()=>choose(c)}
- className="text-6xl h-28 bg-white rounded-3xl shadow"
- >
- {c.emoji}
- </button>
- ))}
- </div>
+      state.memoryTimer = setTimeout(() => {
+        hintCards.innerHTML = '';
+        const allChoices = shuffle([target, ...shuffle(colors.filter(c => c.name !== target.name)).slice(0, 3)]);
+        choices.style.display = 'grid';
+        allChoices.forEach(item => {
+          const btn = document.createElement('button');
+          btn.className = 'color-choice';
+          btn.style.background = item.color;
+          btn.innerHTML = `<div style="font-size:34px;">${item.emoji}</div><div style="margin-top:6px;">${item.name}</div>`;
+          btn.addEventListener('click', () => {
+            if (item.name === state.memoryTarget.name) {
+              msg.textContent = `好記性！這是${item.name} 🌟`;
+              earnStar();
+              setTimeout(setupMemoryGame, 900);
+            } else {
+              msg.textContent = '差一點點，再試一次 💛';
+            }
+          });
+          choices.appendChild(btn);
+        });
+      }, 1800);
+    }
 
- </div>
+    function createFloatingDecor() {
+      const wrap = document.getElementById('floatingWrap');
+      const icons = ['⭐', '☁️', '🌈', '🌸', '🎈', '✨', '🫧'];
+      for (let i = 0; i < 16; i++) {
+        const el = document.createElement('div');
+        el.className = 'float';
+        el.textContent = icons[i % icons.length];
+        el.style.left = Math.random() * 100 + '%';
+        el.style.bottom = (-60 - Math.random() * 180) + 'px';
+        el.style.animationDuration = (10 + Math.random() * 10) + 's';
+        el.style.animationDelay = (Math.random() * 8) + 's';
+        el.style.fontSize = (22 + Math.random() * 24) + 'px';
+        wrap.appendChild(el);
+      }
+    }
 
- </GameShell>
- )
-}
-
-/* -----------------------------
-   遊戲容器
-------------------------------*/
-
-function GameShell({title,children,onBack}){
- return(
- <div className="min-h-screen bg-gradient-to-b from-pink-100 via-yellow-50 to-sky-100 p-6">
- <FloatingDecorations/>
- <div className="max-w-4xl mx-auto space-y-6">
-
- <div className="flex justify-between items-center">
- <h2 className="text-3xl font-bold">{title}</h2>
- <Button onClick={onBack}>
- <HomeIcon className="w-4 h-4 mr-2"/>
- 回首頁
- </Button>
- </div>
-
- <Card className="rounded-3xl">
- <CardContent className="p-6">
- {children}
- </CardContent>
- </Card>
-
- </div>
- </div>
- )
-}
-
-/* -----------------------------
-   主程式
-------------------------------*/
-
-export default function App(){
-
- const[screen,setScreen]=useState("home")
- const[stars,setStars]=useState(0)
- const[celebrate,setCelebrate]=useState(false)
- const[soundOn,setSoundOn]=useState(true)
- const[gameData,setGameData]=useState({find:0})
-
- const total=useMemo(()=>Object.values(gameData).reduce((a,b)=>a+b,0),[gameData])
-
- const earnStar=()=>{
- setStars(s=>{
- const n=s+1
- if(n%5===0){
- setCelebrate(true)
- setTimeout(()=>setCelebrate(false),1200)
- }
- return n
- })
- }
-
- const track=(k)=>setGameData(p=>({...p,[k]:(p[k]||0)+1}))
-
- return(
- <div className="font-sans">
-
- <Celebration show={celebrate}/>
-
- {screen==="home"&&(
- <Home
- onSelect={setScreen}
- stars={stars}
- total={total}
- soundOn={soundOn}
- toggleSound={()=>setSoundOn(v=>!v)}
- />
- )}
-
- {screen==="find"&&(
- <FindGame
- onBack={()=>setScreen("home")}
- onEarnStar={earnStar}
- soundOn={soundOn}
- onTrack={track}
- />
- )}
-
- <div className="fixed bottom-4 right-4">
- <Button
- className="rounded-full h-14 w-14"
- onClick={()=>{
- setStars(0)
- setGameData({find:0})
- setScreen("home")
- }}
- >
- <RotateCcw/>
- </Button>
- </div>
-
- </div>
- )
-}
+    createFloatingDecor();
+    updateStats();
+  </script>
+</body>
+</html>
